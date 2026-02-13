@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shithead Card Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Arial', cursive, sans-serif;
+            background: linear-gradient(135deg, #ff006e, #fb5607, #ff006e, #8338ec);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        body::before {
+            content: '💕';
+            position: fixed;
+            font-size: 60px;
+            top: 10%;
+            left: 5%;
+            opacity: 0.4;
+            animation: float 6s ease-in-out infinite, spin 10s linear infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(15deg); }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 1200px;
+            background: linear-gradient(135deg, #1a001a, #4a0e4e);
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 20px 80px rgba(255, 0, 110, 0.6), 0 0 50px rgba(131, 56, 236, 0.4);
+            border: 4px solid transparent;
+            background-clip: padding-box;
+            position: relative;
+        }
+
+        #game-container::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            background: linear-gradient(45deg, #ff006e, #8338ec, #06ffa5, #ff006e);
+            background-size: 300% 300%;
+            border-radius: 25px;
+            z-index: -1;
+            animation: borderGlow 4s ease infinite;
+        }
+
+        @keyframes borderGlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        #game-container::after {
+            content: '❤️';
+            position: absolute;
+            top: -20px;
+            right: 20px;
+            font-size: 40px;
+            animation: heartbeat 1.5s ease-in-out infinite;
+            filter: drop-shadow(0 0 10px #ff006e);
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+
+        .game-section {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .section-label {
+            color: #06ffa5;
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-shadow: 0 0 20px rgba(6, 255, 165, 0.8), 2px 2px 4px rgba(0,0,0,0.5);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            animation: labelGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes labelGlow {
+            0%, 100% { text-shadow: 0 0 20px rgba(6, 255, 165, 0.8), 2px 2px 4px rgba(0,0,0,0.5); }
+            50% { text-shadow: 0 0 30px rgba(6, 255, 165, 1), 0 0 40px rgba(131, 56, 236, 0.6), 2px 2px 4px rgba(0,0,0,0.5); }
+        }
+
+        .cards-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            min-height: 130px;
+            align-items: center;
+        }
+
+        .card {
+            width: 90px;
+            height: 120px;
+            background: linear-gradient(135deg, #fff, #f0f0ff);
+            border: 3px solid #8338ec;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 15px rgba(131, 56, 236, 0.4);
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .card:hover {
+            transform: translateY(-20px) scale(1.1) rotateZ(5deg);
+            box-shadow: 0 15px 40px rgba(255, 0, 110, 0.6), 0 0 30px rgba(131, 56, 236, 0.8);
+            border-color: #ff006e;
+        }
+
+        .card.face-down {
+            background: linear-gradient(135deg, #8338ec, #ff006e, #fb5607);
+            color: white;
+            cursor: default;
+            font-size: 40px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+
+        .card.face-down.clickable {
+            cursor: pointer;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 4px 15px rgba(131, 56, 236, 0.4); }
+            50% { box-shadow: 0 4px 25px rgba(255, 0, 110, 0.8), 0 0 30px rgba(131, 56, 236, 0.6); }
+        }
+
+        .card.face-down.clickable:hover {
+            transform: translateY(-20px) scale(1.1) rotateZ(-5deg);
+            box-shadow: 0 15px 40px rgba(255, 0, 110, 0.9), 0 0 40px rgba(6, 255, 165, 0.6);
+        }
+
+        .card.red {
+            color: #d00;
+        }
+
+        .card.black {
+            color: #000;
+        }
+
+        .card-suit {
+            font-size: 24px;
+            margin-top: 5px;
+        }
+
+        .pile-section {
+            background: rgba(131, 56, 236, 0.2);
+            padding: 20px;
+            border-radius: 20px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            border: 3px solid rgba(6, 255, 165, 0.4);
+            box-shadow: inset 0 0 30px rgba(131, 56, 236, 0.3);
+        }
+
+        #pile-display {
+            position: relative;
+            min-width: 100px;
+            min-height: 130px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .pile-card {
+            position: absolute;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #ff006e, #8338ec);
+            color: white;
+            border: 2px solid #06ffa5;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(255, 0, 110, 0.5), 0 0 20px rgba(131, 56, 236, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #8338ec, #ff006e);
+            transform: scale(1.1) translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 0, 110, 0.8), 0 0 40px rgba(6, 255, 165, 0.6);
+            border-color: #ff006e;
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .info-text {
+            color: #06ffa5;
+            font-size: 18px;
+            margin: 10px 0;
+            text-shadow: 0 0 10px rgba(6, 255, 165, 0.6);
+            font-weight: bold;
+        }
+
+        .turn-indicator {
+            background: linear-gradient(135deg, rgba(131, 56, 236, 0.9), rgba(255, 0, 110, 0.9));
+            padding: 15px 30px;
+            border-radius: 20px;
+            font-size: 22px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 3px solid #06ffa5;
+            box-shadow: 0 4px 20px rgba(255, 0, 110, 0.6), 0 0 30px rgba(6, 255, 165, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            animation: turnPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes turnPulse {
+            0%, 100% { box-shadow: 0 4px 20px rgba(255, 0, 110, 0.6), 0 0 30px rgba(6, 255, 165, 0.4); }
+            50% { box-shadow: 0 4px 30px rgba(255, 0, 110, 0.9), 0 0 50px rgba(6, 255, 165, 0.8); }
+        }
+
+        .message {
+            color: #06ffa5;
+            font-size: 18px;
+            margin: 10px 0;
+            min-height: 25px;
+            font-weight: bold;
+            text-shadow: 0 0 15px rgba(6, 255, 165, 0.8), 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        #lose-screen, #treasure-screen, #letter-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(139, 0, 0, 0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 40px;
+        }
+
+        #lose-message, #treasure-message {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 600px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+        }
+
+        #lose-message h2, #treasure-message h2 {
+            color: #8b0000;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        #lose-message p, #treasure-message p {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        #restart-button {
+            padding: 15px 40px;
+            font-size: 20px;
+            background: #ff1493;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        #restart-button:hover {
+            background: #ff69b4;
+            transform: scale(1.05);
+        }
+
+        #treasure-chest {
+            width: 250px;
+            height: 250px;
+            cursor: pointer;
+            transition: transform 0.3s;
+            filter: drop-shadow(0 15px 30px rgba(255, 215, 0, 0.6)) drop-shadow(0 0 50px rgba(255, 0, 110, 0.4));
+            animation: chestGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes chestGlow {
+            0%, 100% {
+                filter: drop-shadow(0 15px 30px rgba(255, 215, 0, 0.6)) drop-shadow(0 0 50px rgba(255, 0, 110, 0.4));
+            }
+            50% {
+                filter: drop-shadow(0 15px 40px rgba(255, 215, 0, 1)) drop-shadow(0 0 80px rgba(131, 56, 236, 0.8));
+            }
+        }
+
+        #treasure-chest:hover {
+            transform: scale(1.15) rotateY(10deg);
+            animation: chestShake 0.5s ease-in-out infinite;
+        }
+
+        @keyframes chestShake {
+            0%, 100% { transform: scale(1.15) rotateY(10deg) translateX(0); }
+            25% { transform: scale(1.15) rotateY(10deg) translateX(-5px); }
+            75% { transform: scale(1.15) rotateY(10deg) translateX(5px); }
+        }
+
+        #letter-screen {
+            background: linear-gradient(135deg, #8b0000, #ff1493);
+            overflow-y: auto;
+        }
+
+        #letter-content {
+            background: rgba(255, 255, 255, 0.65);
+            padding: 40px 50px;
+            border-radius: 20px;
+            max-width: 700px;
+            margin: 40px auto;
+            text-align: center;
+            box-shadow: 0 15px 60px rgba(0,0,0,0.6);
+            position: relative;
+            z-index: 10;
+            border: 3px solid #ff69b4;
+            backdrop-filter: blur(8px);
+        }
+
+        #letter-content::before {
+            content: '💌';
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 50px;
+            background: white;
+            padding: 10px;
+            border-radius: 50%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        #letter-content::after {
+            content: '';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, transparent 50%, #ff69b4 50%);
+            opacity: 0.3;
+        }
+
+        .letter-corner {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            opacity: 0.3;
+        }
+
+        .letter-corner.top-left {
+            top: 10px;
+            left: 10px;
+            background: linear-gradient(225deg, transparent 50%, #ff69b4 50%);
+        }
+
+        .letter-corner.bottom-right {
+            bottom: 10px;
+            right: 10px;
+            background: linear-gradient(45deg, transparent 50%, #ff69b4 50%);
+        }
+
+        .letter-corner.bottom-left {
+            bottom: 10px;
+            left: 10px;
+            background: linear-gradient(315deg, transparent 50%, #ff69b4 50%);
+        }
+
+        #letter-content h1 {
+            color: #8b0000;
+            margin-bottom: 25px;
+            font-size: 32px;
+            border-bottom: 2px solid #ff69b4;
+            padding-bottom: 15px;
+        }
+
+        #letter-content p {
+            color: #333;
+            font-size: 16px;
+            line-height: 1.7;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        #letter-content .signature {
+            text-align: right;
+            font-style: italic;
+            margin-top: 30px;
+            font-size: 18px;
+            color: #8b0000;
+            border-top: 2px solid #ff69b4;
+            padding-top: 20px;
+        }
+
+        .heart {
+            position: absolute;
+            color: #ff69b4;
+            font-size: 30px;
+            animation: fall linear infinite;
+            opacity: 0.8;
+        }
+
+        @keyframes fall {
+            0% {
+                top: -10%;
+                opacity: 0.8;
+            }
+            100% {
+                top: 110%;
+                opacity: 0;
+            }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #f0f;
+            animation: confettiFall linear infinite;
+        }
+
+        @keyframes confettiFall {
+            0% {
+                top: -10%;
+                transform: translateX(0) rotateZ(0deg);
+                opacity: 1;
+            }
+            100% {
+                top: 110%;
+                transform: translateX(100px) rotateZ(720deg);
+                opacity: 0;
+            }
+        }
+
+        .confetti:nth-child(odd) {
+            animation-direction: reverse;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        #youtube-player {
+            position: fixed;
+            top: -1000px;
+            left: -1000px;
+        }
+
+        #cover-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        #cover-page.hidden {
+            display: none;
+        }
+
+        .cover-title {
+            font-size: 42px;
+            color: #fff;
+            margin-bottom: 30px;
+            text-shadow: 0 0 30px rgba(255, 0, 110, 1), 0 0 50px rgba(131, 56, 236, 0.8), 3px 3px 6px rgba(0,0,0,0.5);
+            font-weight: bold;
+            line-height: 1.3;
+            animation: titleGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { 
+                text-shadow: 0 0 30px rgba(255, 0, 110, 1), 0 0 50px rgba(131, 56, 236, 0.8), 3px 3px 6px rgba(0,0,0,0.5);
+            }
+            50% { 
+                text-shadow: 0 0 50px rgba(255, 0, 110, 1), 0 0 80px rgba(131, 56, 236, 1), 0 0 100px rgba(6, 255, 165, 0.6), 3px 3px 6px rgba(0,0,0,0.5);
+            }
+        }
+
+        .cover-title::before {
+            content: '💖 ';
+        }
+
+        .cover-title::after {
+            content: ' 💖';
+        }
+
+        .rules-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 700px;
+            text-align: left;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .rules-container h2 {
+            color: #8b0000;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 28px;
+        }
+
+        .rules-container h3 {
+            color: #d00;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        .rules-container p, .rules-container ul {
+            color: #333;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .rules-container ul {
+            padding-left: 30px;
+        }
+
+        .rules-container li {
+            margin-bottom: 8px;
+        }
+
+        .special-card {
+            font-weight: bold;
+            color: #8b0000;
+        }
+
+        .reward-box {
+            background: linear-gradient(135deg, #06ffa5, #06d6a0);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border: 3px solid #8338ec;
+            box-shadow: 0 0 30px rgba(6, 255, 165, 0.6), 0 0 50px rgba(131, 56, 236, 0.4);
+            animation: rewardGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes rewardGlow {
+            0%, 100% { 
+                box-shadow: 0 0 30px rgba(6, 255, 165, 0.6), 0 0 50px rgba(131, 56, 236, 0.4);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 50px rgba(6, 255, 165, 1), 0 0 80px rgba(255, 0, 110, 0.6);
+                transform: scale(1.02);
+            }
+        }
+
+        .reward-box p {
+            color: #1a001a;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .start-btn {
+            padding: 20px 50px;
+            font-size: 28px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #ff006e, #8338ec, #06ffa5);
+            background-size: 200% 200%;
+            animation: gradientMove 3s ease infinite;
+            color: white;
+            border: 3px solid white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 30px rgba(255, 0, 110, 0.6), 0 0 50px rgba(131, 56, 236, 0.4);
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes gradientMove {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .start-btn::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .start-btn:hover {
+            transform: scale(1.15) rotateZ(-2deg);
+            box-shadow: 0 15px 50px rgba(255, 0, 110, 0.9), 0 0 80px rgba(6, 255, 165, 0.8);
+        }
+
+        .silly-note {
+            color: #ffd700;
+            font-size: 14px;
+            font-style: italic;
+            margin-top: 10px;
+        }
+
+        #game-area {
+            display: none;
+        }
+
+        #game-area.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- COVER PAGE -->
+        <div id="cover-page">
+            <div class="cover-title">Special Valentines Shithead Edition</div>
+            
+            <div class="rules-container">
+                <h2>🎮 How to Play</h2>
+                
+                <h3>The Basics:</h3>
+                <p>The goal is simple: Get rid of all your cards. Just wanted to clarify the rules for a beginner like yourself 😉</p>
+                <ul>
+                    <li>You start with 3 cards in your hand - play these first</li>
+                    <li>Once your hand is empty, play your 3 face-up cards</li>
+                    <li>Finally, play your 3 face-down cards (blind!)</li>
+                    <li>Each turn, play a card equal to or higher than the pile</li>
+                    <li>You can also play the same card on itself (6 on 6, 7 on 7, etc.)</li>
+                    <li>Can't play? Hit "Pick up Gimp" and take the pile</li>
+                </ul>
+
+                <h3>✨ Special Cards (Your Secret Weapons!):</h3>
+                <ul>
+                    <li><span class="special-card">2</span> - Resets the pile! Any card can be played next</li>
+                    <li><span class="special-card">5</span> - Mirror card! Copies whatever is underneath (or acts like a 2 if played on nothing). If you play a 5 on a 7, the next player must still play lower!</li>
+                    <li><span class="special-card">7</span> - Next player must play lower than a 7 (or another 7)</li>
+                    <li><span class="special-card">8</span> - Skip my turn! You play again</li>
+                    <li><span class="special-card">10</span> - BOOM! Clears the pile (but can't play on a 7)</li>
+                    <li><span class="special-card">Four of a kind</span> - If 4 same cards are played in a row, pile clears!</li>
+                </ul>
+
+                <div class="reward-box">
+                    <p>🎁 Win the game and a special surprise is at the end 🎁</p>
+                </div>
+
+                <p style="text-align: center; color: #666; font-size: 14px; margin-top: 20px;">
+                    P.S. I may have given you some <em>very</em> good cards... but don't tell anyone 🤫
+                </p>
+            </div>
+
+            <button class="start-btn" onclick="startGame()">Let's Play! 💕</button>
+            <div class="silly-note">Prepare to lose... or win? Who knows! 😜</div>
+        </div>
+
+        <!-- GAME AREA -->
+        <div id="game-area">
+        <div class="turn-indicator" id="turn-indicator">Your Turn</div>
+
+        <!-- CPU AREA -->
+        <div class="game-section">
+            <div class="section-label">CPU</div>
+            <div class="info-text">Cards in hand: <span id="cpu-hand-count">3</span></div>
+            <div class="cards-container" id="cpu-faceup-cards"></div>
+            <div class="cards-container" id="cpu-facedown-cards"></div>
+        </div>
+
+        <!-- MIDDLE PILE -->
+        <div class="game-section">
+            <div class="pile-section">
+                <div class="section-label">Pile</div>
+                <div class="info-text" style="color: #06ffa5;">Deck: <span id="deck-count">40</span> cards left</div>
+                <div id="pile-display"></div>
+                <div class="message" id="game-message"></div>
+                <button id="pickup-btn" style="display:none;">Pick up Gimp</button>
+            </div>
+        </div>
+
+        <!-- PLAYER AREA -->
+        <div class="game-section">
+            <div class="section-label">You</div>
+            <div class="info-text">Cards in hand: <span id="player-hand-count">3</span></div>
+            <div class="cards-container" id="player-hand-cards"></div>
+            <div class="cards-container" id="player-faceup-cards"></div>
+            <div class="cards-container" id="player-facedown-cards"></div>
+        </div>
+        </div>
+        <!-- END GAME AREA -->
+
+    <div id="lose-screen">
+        <div id="lose-message">
+            <h2>Well, well, well...</h2>
+            <p>I placed this here thinking there is no way she will ever lose and this feature will never be used but I guess I am not always right relatively. So have another go 😊</p>
+            <button id="restart-button">Reset & Try Again</button>
+        </div>
+    </div>
+
+    <div id="treasure-screen">
+        <div id="treasure-message">
+            <h2>Congratulations my spanspek!</h2>
+            <p>Here is your reward</p>
+            <svg id="treasure-chest" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+                <!-- Shadow -->
+                <ellipse cx="120" cy="210" rx="80" ry="15" fill="rgba(0,0,0,0.3)"/>
+                
+                <!-- Chest base -->
+                <rect x="40" y="120" width="160" height="90" fill="#8B4513" stroke="#654321" stroke-width="4"/>
+                <rect x="40" y="120" width="160" height="90" fill="url(#woodGradient)"/>
+                
+                <!-- Wood grain details -->
+                <line x1="40" y1="140" x2="200" y2="140" stroke="#654321" stroke-width="2" opacity="0.5"/>
+                <line x1="40" y1="160" x2="200" y2="160" stroke="#654321" stroke-width="2" opacity="0.5"/>
+                <line x1="40" y1="180" x2="200" y2="180" stroke="#654321" stroke-width="2" opacity="0.5"/>
+                
+                <!-- Chest lid (arched top) -->
+                <defs>
+                    <linearGradient id="woodGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#A0522D;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#654321;stop-opacity:1" />
+                    </linearGradient>
+                    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+                        <stop offset="50%" style="stop-color:#FFA500;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#FF8C00;stop-opacity:1" />
+                    </linearGradient>
+                    <radialGradient id="gemGradient">
+                        <stop offset="0%" style="stop-color:#00FFFF;stop-opacity:1" />
+                        <stop offset="50%" style="stop-color:#0080FF;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#0040FF;stop-opacity:1" />
+                    </radialGradient>
+                </defs>
+                
+                <path d="M 35 120 Q 35 80, 60 70 L 180 70 Q 205 80, 205 120 Z" fill="url(#woodGradient)" stroke="#654321" stroke-width="4"/>
+                
+                <!-- Gold trim on lid -->
+                <path d="M 40 120 Q 40 85, 60 75 L 180 75 Q 200 85, 200 120" fill="none" stroke="url(#goldGradient)" stroke-width="6"/>
+                <path d="M 45 120 Q 45 88, 62 78 L 178 78 Q 195 88, 195 120" fill="none" stroke="#FFA500" stroke-width="3" opacity="0.7"/>
+                
+                <!-- Central lock mechanism -->
+                <circle cx="120" cy="120" r="18" fill="url(#goldGradient)" stroke="#FF8C00" stroke-width="3"/>
+                <circle cx="120" cy="120" r="12" fill="#654321"/>
+                <rect x="117" y="115" width="6" height="15" fill="url(#goldGradient)" rx="3"/>
+                
+                <!-- Gems on the chest -->
+                <circle cx="80" cy="95" r="8" fill="url(#gemGradient)" stroke="#0080FF" stroke-width="2"/>
+                <circle cx="160" cy="95" r="8" fill="url(#gemGradient)" stroke="#0080FF" stroke-width="2"/>
+                <circle cx="120" cy="85" r="10" fill="#FF1493" stroke="#FF69B4" stroke-width="2"/>
+                
+                <!-- Gold corner decorations -->
+                <polygon points="35,125 45,115 45,125" fill="url(#goldGradient)"/>
+                <polygon points="205,125 195,115 195,125" fill="url(#goldGradient)"/>
+                
+                <!-- Gold bands on base -->
+                <rect x="35" y="145" width="170" height="8" fill="url(#goldGradient)" opacity="0.8"/>
+                <rect x="35" y="185" width="170" height="8" fill="url(#goldGradient)" opacity="0.8"/>
+                
+                <!-- Base feet -->
+                <rect x="50" y="208" width="25" height="8" fill="#654321" rx="2"/>
+                <rect x="165" y="208" width="25" height="8" fill="#654321" rx="2"/>
+                
+                <!-- Sparkle effects -->
+                <circle cx="85" cy="90" r="2" fill="#FFFFFF" opacity="0.9"/>
+                <circle cx="165" cy="90" r="2" fill="#FFFFFF" opacity="0.9"/>
+                <circle cx="115" cy="80" r="2" fill="#FFFFFF" opacity="0.9"/>
+                <polygon points="120,120 122,118 120,116 118,118" fill="#FFFFFF" opacity="0.8"/>
+            </svg>
+            <p style="margin-top: 20px; font-size: 22px; color: #8b0000; font-weight: bold; animation: bounce 1s ease-in-out infinite;">👆 Click to Open! 👆</p>
+        </div>
+    </div>
+
+    <div id="letter-screen">
+        <div id="letter-content">
+            <div class="letter-corner top-left"></div>
+            <div class="letter-corner bottom-left"></div>
+            <h1>Happy Valentine's Day</h1>
+            <p>I hope you have the most amazing day, because you deserve nothing less. I can't wait to build Lego and paint with you tomorrow. I've never been more excited for anything since being with you. I hope you actually beat the game and get to read this message.</p>
+            <p>I want you to know that meeting you has been the best thing to happen to me since sliced bread and I have never been happier to have walked into a bathroom than I was on the 25th of November 2025 at 18.92528199859169, 102.44836725716023 (the location of Gary's Irish Bar).</p>
+            <p>Like I've said I honestly only think of you once a day, because you never leave my mind. You are the first thing I think about when I go to sleep and the first thing on my mind when I wake up. I struggled to write this message, and your letter too, because words don't do justice to how deeply I feel about you. All I want is to give you the love and the world you deserve, and day by day close that void a little more.</p>
+            <p>I love you very much, and you've never stopped giving me butterflies all over my body. I hope to maybe get one or two more Valentines if I play my cards right, as I know you are a HOT commodity. xxx You make it hard to be anything but crazy.</p>
+            <p>Thank you for being you.</p>
+            <p class="signature">Love,<br>Benjamin David Emanuel</p>
+        </div>
+    </div>
+
+    <div id="youtube-player"></div>
+
+    <script>
+        // Load YouTube API
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        var player;
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('youtube-player', {
+                height: '1',
+                width: '1',
+                videoId: 'y9Kqb2z9Lzs',
+                playerVars: {
+                    'autoplay': 1,
+                    'loop': 1,
+                    'playlist': 'y9Kqb2z9Lzs',
+                    'controls': 0
+                },
+                events: {
+                    'onReady': function(event) {
+                        event.target.setVolume(50);
+                        event.target.playVideo();
+                    }
+                }
+            });
+        }
+
+        // Game state
+        const SUITS = ['♥', '♦', '♣', '♠'];
+        const VALUES = ['2', '3', '4', '5', '6', '7', '8', '9', 'J', 'Q', 'K', 'A'];  // No 10s in deck!
+        
+        let deck = [];
+        let pile = [];
+        let playerHand = [];
+        let playerFaceUp = [];
+        let playerFaceDown = [];
+        let cpuHand = [];
+        let cpuFaceUp = [];
+        let cpuFaceDown = [];
+        let currentPlayer = 'player';
+        let mustPlayLower = false;
+        let gameOver = false;
+
+        // Create and shuffle deck
+        function createDeck() {
+            const fullDeck = [];
+            for (let suit of SUITS) {
+                for (let value of VALUES) {
+                    fullDeck.push({ suit, value });
+                }
+            }
+            // Shuffle
+            for (let i = fullDeck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [fullDeck[i], fullDeck[j]] = [fullDeck[j], fullDeck[i]];
+            }
+            // Return 40 random cards
+            return fullDeck.slice(0, 40);
+        }
+
+        // Deal cards according to rules
+        function dealCards() {
+            deck = createDeck();
+            
+            // Give player specific face-down cards: 2, 3, 2
+            playerFaceDown = [
+                { suit: '♥', value: '2' },
+                { suit: '♦', value: '3' },
+                { suit: '♠', value: '2' }
+            ];
+            
+            // Give player three 10s as face-up cards (ONLY she has 10s, none in deck!)
+            playerFaceUp = [
+                { suit: '♣', value: '10' },
+                { suit: '♥', value: '10' },
+                { suit: '♠', value: '10' }
+            ];
+            
+            // Deal regular cards to CPU
+            cpuFaceDown = [deck.pop(), deck.pop(), deck.pop()];
+            cpuFaceUp = [deck.pop(), deck.pop(), deck.pop()];
+            
+            // Deal 3 to hand for both players
+            playerHand = [deck.pop(), deck.pop(), deck.pop()];
+            cpuHand = [deck.pop(), deck.pop(), deck.pop()];
+        }
+
+        // Get numeric value of card
+        function getCardValue(card) {
+            const map = {
+                '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7,
+                '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14
+            };
+            return map[card.value];
+        }
+
+        // Get the effective top card (handling 5s)
+        function getTopCard() {
+            if (pile.length === 0) return null;
+            let top = pile[pile.length - 1];
+            // If top is a 5 (mirror), get the card under it
+            // If 5 is played on nothing, it acts like a 2 (any card can be played)
+            if (top.value === '5' && pile.length > 1) {
+                return pile[pile.length - 2];
+            }
+            // If 5 is the only card, treat it like a 2 (return null so any card can be played)
+            if (top.value === '5' && pile.length === 1) {
+                return null;
+            }
+            return top;
+        }
+
+        // Check if a card can be played
+        function canPlay(card) {
+            if (pile.length === 0) return true;
+            
+            const topCard = getTopCard();
+            const cardVal = getCardValue(card);
+            const topVal = getCardValue(topCard);
+            
+            // 2 can be played on anything (resets)
+            if (card.value === '2') return true;
+            
+            // 10 can be played on anything except 7
+            if (card.value === '10') {
+                return topCard.value !== '7';
+            }
+            
+            // 5 can be played on anything (mirror)
+            if (card.value === '5') return true;
+            
+            // 7 can only be played on cards lower than 7 OR on another 7
+            if (card.value === '7') {
+                return topVal < 7 || topVal === 7;
+            }
+            
+            // If must play lower (7 was just played or 5 on 7)
+            if (mustPlayLower) {
+                // Check if actual top card is a 5
+                const actualTopCard = pile[pile.length - 1];
+                if (actualTopCard.value === '5' && pile.length > 1) {
+                    const cardUnder5 = pile[pile.length - 2];
+                    // If 5 is on a 7, preserve the "must play lower" rule
+                    if (cardUnder5.value === '7') {
+                        return cardVal < 7;
+                    }
+                }
+                return cardVal < 7;
+            }
+            
+            // NEW RULE: Allow same card on same card
+            if (cardVal === topVal) return true;
+            
+            // Normal rule: play equal or higher
+            return cardVal >= topVal;
+        }
+
+        // Play a card
+        function playCard(card, player) {
+            pile.push(card);
+            showMessage(`${player === 'player' ? 'You' : 'CPU'} played ${card.value}${card.suit}`);
+            
+            // Check for 4 of a kind
+            if (pile.length >= 4) {
+                const last4 = pile.slice(-4);
+                if (last4.every(c => c.value === last4[0].value)) {
+                    showMessage('Four of a kind! Pile cleared!');
+                    pile = [];
+                    mustPlayLower = false;
+                    render();
+                    setTimeout(() => {
+                        continuePlay(player);
+                    }, 1000);
+                    return;
+                }
+            }
+            
+            // Handle special cards
+            if (card.value === '10') {
+                showMessage('10 played! Pile cleared!');
+                pile = [];
+                mustPlayLower = false;
+                render();
+                setTimeout(() => {
+                    continuePlay(player);
+                }, 1000);
+                return;
+            }
+            
+            if (card.value === '2') {
+                showMessage('2 played! Pile reset!');
+                mustPlayLower = false;
+                currentPlayer = player === 'player' ? 'cpu' : 'player';
+                render();
+                if (currentPlayer === 'cpu') {
+                    setTimeout(cpuTurn, 1500);
+                }
+                return;
+            }
+            
+            if (card.value === '7') {
+                showMessage('7 played! Next player must play lower!');
+                mustPlayLower = true;
+                currentPlayer = player === 'player' ? 'cpu' : 'player';
+                render();
+                if (currentPlayer === 'cpu') {
+                    setTimeout(cpuTurn, 1500);
+                }
+                return;
+            }
+            
+            // Handle 5 (mirror card) - check if it's on a 7
+            if (card.value === '5') {
+                // Check if 5 is played on a 7
+                if (pile.length > 1) {
+                    const cardUnder5 = pile[pile.length - 2];
+                    if (cardUnder5.value === '7') {
+                        showMessage('5 played on 7! Next player must still play lower!');
+                        mustPlayLower = true;
+                        currentPlayer = player === 'player' ? 'cpu' : 'player';
+                        render();
+                        if (currentPlayer === 'cpu') {
+                            setTimeout(cpuTurn, 1500);
+                        }
+                        return;
+                    }
+                }
+                // If 5 not on a 7, treat as normal card
+            }
+            
+            if (card.value === '8') {
+                showMessage('8 played! You go again!');
+                mustPlayLower = false;
+                render();
+                setTimeout(() => {
+                    continuePlay(player);
+                }, 1000);
+                return;
+            }
+            
+            // Normal card - switch turns
+            mustPlayLower = false;
+            currentPlayer = player === 'player' ? 'cpu' : 'player';
+            render();
+            if (currentPlayer === 'cpu') {
+                setTimeout(cpuTurn, 1500);
+            }
+        }
+
+        // Continue playing after special card
+        function continuePlay(player) {
+            if (checkWin(player)) return;
+            
+            if (player === 'player') {
+                refillHand('player');
+                render();
+            } else {
+                refillHand('cpu');
+                cpuTurn();
+            }
+        }
+
+        // Refill hand from deck
+        function refillHand(player) {
+            const hand = player === 'player' ? playerHand : cpuHand;
+            while (hand.length < 3 && deck.length > 0) {
+                hand.push(deck.pop());
+            }
+        }
+
+        // Check if player won
+        function checkWin(player) {
+            const hand = player === 'player' ? playerHand : cpuHand;
+            const faceUp = player === 'player' ? playerFaceUp : cpuFaceUp;
+            const faceDown = player === 'player' ? playerFaceDown : cpuFaceDown;
+            
+            if (hand.length === 0 && faceUp.length === 0 && faceDown.length === 0) {
+                gameOver = true;
+                if (player === 'player') {
+                    setTimeout(showTreasure, 1000);
+                } else {
+                    setTimeout(showLoseScreen, 1000);
+                }
+                return true;
+            }
+            return false;
+        }
+
+        // Show lose screen
+        function showLoseScreen() {
+            document.getElementById('lose-screen').style.display = 'flex';
+        }
+
+        // Show treasure screen
+        function showTreasure() {
+            const treasureScreen = document.getElementById('treasure-screen');
+            treasureScreen.style.display = 'flex';
+            
+            // Create confetti
+            const colors = ['#ff006e', '#8338ec', '#06ffa5', '#ffd700', '#ff6b6b', '#06d6a0'];
+            for (let i = 0; i < 100; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.width = (Math.random() * 10 + 5) + 'px';
+                    confetti.style.height = (Math.random() * 10 + 5) + 'px';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                    treasureScreen.appendChild(confetti);
+                }, i * 30);
+            }
+        }
+
+        // Show love letter
+        function showLetter() {
+            const letterScreen = document.getElementById('letter-screen');
+            letterScreen.style.display = 'flex';
+            
+            // Create falling hearts
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const heart = document.createElement('div');
+                    heart.className = 'heart';
+                    heart.textContent = '❤';
+                    heart.style.left = Math.random() * 100 + '%';
+                    heart.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                    heart.style.animationDelay = Math.random() * 2 + 's';
+                    letterScreen.appendChild(heart);
+                }, i * 200);
+            }
+        }
+
+        // Player clicks a card
+        function playerClickCard(card, source) {
+            if (currentPlayer !== 'player' || gameOver) return;
+            
+            if (!canPlay(card)) {
+                showMessage("Can't play that card!");
+                return;
+            }
+            
+            // Remove card from source
+            if (source === 'hand') {
+                const idx = playerHand.indexOf(card);
+                playerHand.splice(idx, 1);
+            } else if (source === 'faceup') {
+                const idx = playerFaceUp.indexOf(card);
+                playerFaceUp.splice(idx, 1);
+            }
+            
+            playCard(card, 'player');
+            refillHand('player');
+            checkWin('player');
+        }
+
+        // Player clicks face-down card (blind)
+        function playerClickFaceDown(index) {
+            if (currentPlayer !== 'player' || gameOver) return;
+            if (playerHand.length > 0 || playerFaceUp.length > 0) return;
+            
+            const card = playerFaceDown.splice(index, 1)[0];
+            
+            if (canPlay(card)) {
+                showMessage('Blind card works!');
+                playCard(card, 'player');
+                checkWin('player');
+            } else {
+                showMessage('Blind card failed! Picking up pile...');
+                playerHand.push(card);
+                pickupPile('player');
+            }
+        }
+
+        // Pick up pile
+        function pickupPile(player) {
+            if (player === 'player') {
+                playerHand.push(...pile);
+            } else {
+                cpuHand.push(...pile);
+            }
+            pile = [];
+            mustPlayLower = false;
+            currentPlayer = player === 'player' ? 'cpu' : 'player';
+            render();
+            if (currentPlayer === 'cpu') {
+                setTimeout(cpuTurn, 1500);
+            }
+        }
+
+        // CPU turn
+        function cpuTurn() {
+            if (gameOver) return;
+            
+            // Check win
+            if (checkWin('cpu')) return;
+            
+            // Determine which cards CPU can play from
+            let availableCards = [];
+            if (cpuHand.length > 0) {
+                availableCards = cpuHand.map((card, idx) => ({card, source: 'hand', idx}));
+            } else if (cpuFaceUp.length > 0) {
+                availableCards = cpuFaceUp.map((card, idx) => ({card, source: 'faceup', idx}));
+            } else if (cpuFaceDown.length > 0) {
+                // Play blind
+                const idx = Math.floor(Math.random() * cpuFaceDown.length);
+                const card = cpuFaceDown.splice(idx, 1)[0];
+                if (canPlay(card)) {
+                    playCard(card, 'cpu');
+                    refillHand('cpu');
+                    checkWin('cpu');
+                } else {
+                    showMessage('CPU blind card failed! Picking up...');
+                    cpuHand.push(card);
+                    pickupPile('cpu');
+                }
+                return;
+            }
+            
+            // Find playable cards
+            const playable = availableCards.filter(item => canPlay(item.card));
+            
+            if (playable.length > 0) {
+                // SMART CPU STRATEGY
+                let choice;
+                
+                // Priority 1: Play 8 to skip and play again
+                const eights = playable.filter(item => item.card.value === '8');
+                if (eights.length > 0) {
+                    choice = eights[0];
+                }
+                
+                // Priority 2: Play 2 to reset pile when hand is bad
+                if (!choice && cpuHand.length > 5) {
+                    const twos = playable.filter(item => item.card.value === '2');
+                    if (twos.length > 0) {
+                        choice = twos[0];
+                    }
+                }
+                
+                // Priority 3: Play 7 strategically if player has many cards
+                if (!choice && playerHand.length > 4) {
+                    const sevens = playable.filter(item => item.card.value === '7');
+                    if (sevens.length > 0) {
+                        choice = sevens[0];
+                    }
+                }
+                
+                // Priority 4: Play lowest valued card (save high cards)
+                if (!choice) {
+                    playable.sort((a, b) => getCardValue(a.card) - getCardValue(b.card));
+                    choice = playable[0];
+                }
+                
+                // Execute choice
+                if (choice.source === 'hand') {
+                    cpuHand.splice(choice.idx, 1);
+                } else {
+                    cpuFaceUp.splice(choice.idx, 1);
+                }
+                playCard(choice.card, 'cpu');
+                refillHand('cpu');
+                checkWin('cpu');
+            } else {
+                // Must pick up
+                showMessage('CPU picks up pile!');
+                pickupPile('cpu');
+            }
+        }
+
+        // Render the game
+        function render() {
+            // Update turn indicator
+            document.getElementById('turn-indicator').textContent = 
+                currentPlayer === 'player' ? 'Your Turn' : "CPU's Turn";
+            
+            // Update deck counter
+            document.getElementById('deck-count').textContent = deck.length;
+            
+            // Update hand counts
+            document.getElementById('player-hand-count').textContent = playerHand.length;
+            document.getElementById('cpu-hand-count').textContent = cpuHand.length;
+            
+            // Render CPU face-up
+            const cpuFaceUpEl = document.getElementById('cpu-faceup-cards');
+            cpuFaceUpEl.innerHTML = '';
+            cpuFaceUp.forEach(card => {
+                cpuFaceUpEl.appendChild(createCardElement(card));
+            });
+            
+            // Render CPU face-down
+            const cpuFaceDownEl = document.getElementById('cpu-facedown-cards');
+            cpuFaceDownEl.innerHTML = '';
+            cpuFaceDown.forEach(card => {
+                const el = createCardElement(card, true);
+                cpuFaceDownEl.appendChild(el);
+            });
+            
+            // Render pile
+            const pileEl = document.getElementById('pile-display');
+            pileEl.innerHTML = '';
+            if (pile.length > 0) {
+                const recentCards = pile.slice(-3);
+                recentCards.forEach((card, i) => {
+                    const el = createCardElement(card);
+                    el.classList.add('pile-card');
+                    el.style.transform = `translate(${i * 3}px, ${i * 3}px)`;
+                    pileEl.appendChild(el);
+                });
+            }
+            
+            // Render player hand
+            const playerHandEl = document.getElementById('player-hand-cards');
+            playerHandEl.innerHTML = '';
+            playerHand.forEach(card => {
+                const el = createCardElement(card);
+                el.onclick = () => playerClickCard(card, 'hand');
+                playerHandEl.appendChild(el);
+            });
+            
+            // Render player face-up
+            const playerFaceUpEl = document.getElementById('player-faceup-cards');
+            playerFaceUpEl.innerHTML = '';
+            playerFaceUp.forEach(card => {
+                const el = createCardElement(card);
+                if (playerHand.length === 0) {
+                    el.onclick = () => playerClickCard(card, 'faceup');
+                } else {
+                    el.style.opacity = '0.5';
+                    el.style.cursor = 'not-allowed';
+                }
+                playerFaceUpEl.appendChild(el);
+            });
+            
+            // Render player face-down
+            const playerFaceDownEl = document.getElementById('player-facedown-cards');
+            playerFaceDownEl.innerHTML = '';
+            playerFaceDown.forEach((card, idx) => {
+                const el = createCardElement(card, true);
+                if (playerHand.length === 0 && playerFaceUp.length === 0) {
+                    el.classList.add('clickable');
+                    el.onclick = () => playerClickFaceDown(idx);
+                }
+                playerFaceDownEl.appendChild(el);
+            });
+            
+            // Pickup button
+            const pickupBtn = document.getElementById('pickup-btn');
+            if (currentPlayer === 'player' && !gameOver) {
+                // If we're on face-down cards, don't show pickup button (must play blind)
+                if (playerHand.length === 0 && playerFaceUp.length === 0 && playerFaceDown.length > 0) {
+                    pickupBtn.style.display = 'none';
+                } else {
+                    // Otherwise check if player has valid moves
+                    const currentCards = playerHand.length > 0 ? playerHand : playerFaceUp;
+                    const hasValidPlay = currentCards.some(card => canPlay(card));
+                    pickupBtn.style.display = hasValidPlay ? 'none' : 'block';
+                }
+            } else {
+                pickupBtn.style.display = 'none';
+            }
+        }
+
+        // Create card DOM element
+        function createCardElement(card, faceDown = false) {
+            const el = document.createElement('div');
+            el.className = 'card';
+            
+            if (faceDown) {
+                el.classList.add('face-down');
+                el.textContent = '?';
+                return el;
+            }
+            
+            const color = (card.suit === '♥' || card.suit === '♦') ? 'red' : 'black';
+            el.classList.add(color);
+            
+            el.innerHTML = `
+                <div>${card.value}</div>
+                <div class="card-suit">${card.suit}</div>
+            `;
+            
+            return el;
+        }
+
+        // Show message
+        function showMessage(msg) {
+            document.getElementById('game-message').textContent = msg;
+        }
+
+        // Pickup button
+        document.getElementById('pickup-btn').onclick = () => {
+            if (currentPlayer === 'player') {
+                pickupPile('player');
+            }
+        };
+
+        // Restart button
+        document.getElementById('restart-button').onclick = () => {
+            // Hide lose screen
+            document.getElementById('lose-screen').style.display = 'none';
+            
+            // Clear any confetti from treasure screen
+            const treasureScreen = document.getElementById('treasure-screen');
+            const confettiElements = treasureScreen.querySelectorAll('.confetti');
+            confettiElements.forEach(el => el.remove());
+            treasureScreen.style.display = 'none';
+            
+            // Clear any hearts from letter screen
+            const letterScreen = document.getElementById('letter-screen');
+            const heartElements = letterScreen.querySelectorAll('.heart');
+            heartElements.forEach(el => el.remove());
+            letterScreen.style.display = 'none';
+            
+            // Restart the game
+            initGame();
+        };
+
+        // Treasure chest click
+        document.getElementById('treasure-chest').onclick = () => {
+            const treasureScreen = document.getElementById('treasure-screen');
+            // Remove confetti
+            const confettiElements = treasureScreen.querySelectorAll('.confetti');
+            confettiElements.forEach(el => el.remove());
+            // Hide treasure screen
+            treasureScreen.style.display = 'none';
+            showLetter();
+        };
+
+        // Initialize game
+        function initGame() {
+            dealCards();
+            currentPlayer = 'player';
+            mustPlayLower = false;
+            gameOver = false;
+            pile = [];
+            document.getElementById('deck-count').textContent = deck.length;
+            showMessage('Game started! Play a card.');
+            render();
+        }
+
+        // Start game from cover page
+        function startGame() {
+            document.getElementById('cover-page').classList.add('hidden');
+            document.getElementById('game-area').classList.add('active');
+            initGame();
+        }
+
+        // Don't auto-start - wait for button click
+        // Game will start when startGame() is called from the button
+    </script>
+</body>
+</html>
